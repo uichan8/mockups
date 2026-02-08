@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Gallery App Mockup</title>
+<style>
+/* ========================================
+   갤러리 앱 목업 - 스타일시트
+   ======================================== */
+
+/* --- 초기화 --- */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+
+/* --- 폰 프레임 (아이폰 스타일) --- */
+.phone-frame {
+  width: 375px;
+  height: 812px;
+  background: #000;
+  border-radius: 48px;
+  border: 4px solid #2a2a3e;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 0 2px #111, 0 20px 60px rgba(0,0,0,0.5);
+}
+
+/* 노치 (상단 카메라 영역) */
+.notch {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 34px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 20;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* --- 상태 바 (시간, 와이파이, 배터리) --- */
+.status-bar {
+  height: 54px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 28px 8px;
+  background: #0a0a0f;
+  z-index: 10;
+}
+
+.status-bar .time { font-size: 15px; font-weight: 600; color: #fff; }
+.status-icons { display: flex; gap: 6px; align-items: center; }
+.status-icons svg { width: 16px; height: 16px; fill: #fff; }
+
+/* --- 상단 바 (뒤로가기, 테마, 도움말, 저장) --- */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #0a0a0f;
+}
+
+.back-btn {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+
+.header-right { display: flex; align-items: center; gap: 12px; }
+
+.header-icon {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.header-icon:hover { opacity: 0.7; }
+
+/* 헤더 토스트 메시지 (액션 피드백) */
+.header-msg {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  opacity: 0;
+  transition: opacity 0.3s;
+  white-space: nowrap;
+}
+
+.header-msg.show { opacity: 1; }
+
+/* 저장 버튼 */
+.save-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: #5e9eff;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.save-btn:hover { background: #4a8ae6; }
+
+/* --- 사진 영역 --- */
+.photo-area {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0a0a0f;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 사진 메타 정보 (날짜, 위치) */
+.photo-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 16px;
+  z-index: 2;
+}
+
+.photo-date { font-size: 13px; color: rgba(255,255,255,0.5); }
+.photo-location { font-size: 12px; color: rgba(255,255,255,0.35); }
+
+.photo-container {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 8px 0;
+}
+
+/* --- 필름스트립 (썸네일 가로 스크롤) --- */
+.filmstrip {
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+  margin-top: 12px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  padding: 4px calc(50% - 20px);
+  width: 100%;
+}
+
+.filmstrip::-webkit-scrollbar { display: none; }
+
+.film-thumb {
+  width: 40px; height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: all 0.3s;
+  border: none;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+}
+
+.film-thumb.active {
+  opacity: 1;
+  box-shadow: inset 0 0 0 2px #fff;
+  transform: scale(1.1);
+}
+
+.film-thumb:hover { opacity: 0.7; }
+.film-img { width: 100%; height: 100%; }
+
+/* --- 사진 슬라이더 (좌/현재/우 3장 카드 전환) --- */
+.photo-slider {
+  width: 340px;
+  aspect-ratio: var(--photo-ratio, 9/12);
+  max-height: 100%;
+  max-width: 340px;
+  position: relative;
+  overflow: visible;
+  border-radius: 16px;
+  transition: aspect-ratio 0.4s;
+}
+
+.photo-slide {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.45s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.4s;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.photo-slide.current { transform: translateX(0) scale(1); opacity: 1; }
+.photo-slide.left    { transform: translateX(-115%) scale(0.88); opacity: 0.5; }
+.photo-slide.right   { transform: translateX(115%) scale(0.88); opacity: 0.5; }
+
+/* 사진 그라디언트 배경 (실제 이미지 대용) */
+.grad-1 { background: linear-gradient(145deg, #1e3a5f, #2d6a8f, #4ecdc4, #ffe66d); }
+.grad-2 { background: linear-gradient(145deg, #e74c3c, #e67e22, #f1c40f, #e74c3c); }
+.grad-3 { background: linear-gradient(145deg, #8e44ad, #3498db, #1abc9c, #2ecc71); }
+.grad-4 { background: linear-gradient(145deg, #2c3e50, #e74c3c, #ecf0f1, #3498db); }
+.grad-5 { background: linear-gradient(145deg, #1abc9c, #16a085, #2ecc71, #27ae60); }
+
+/* 풍경 일러스트 (첫 번째 사진 장식) */
+.landscape { position: absolute; bottom: 0; left: 0; right: 0; height: 60%; }
+.mountain  { position: absolute; bottom: 0; }
+.mountain-1 { left: -20px;  border-left: 140px solid transparent; border-right: 140px solid transparent; border-bottom: 200px solid rgba(30,58,95,0.7); }
+.mountain-2 { right: -10px; border-left: 120px solid transparent; border-right: 120px solid transparent; border-bottom: 160px solid rgba(45,80,120,0.6); }
+.mountain-3 { left: 80px;   border-left: 160px solid transparent; border-right: 160px solid transparent; border-bottom: 240px solid rgba(25,50,80,0.5); }
+.sun   { position: absolute; top: 40px; right: 60px; width: 60px; height: 60px; border-radius: 50%; background: radial-gradient(circle, #ffe66d, #ff9a56); box-shadow: 0 0 40px rgba(255,230,109,0.4); }
+.water { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; background: linear-gradient(to bottom, rgba(78,205,196,0.3), rgba(30,58,95,0.5)); }
+
+/* --- 즐겨찾기 --- */
+
+/* 사진 좌상단 별표 아이콘 */
+.fav-star {
+  position: absolute;
+  top: 10px; left: 10px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 4px rgba(0,0,0,0.4));
+}
+
+.fav-star.show { opacity: 1; }
+
+/* 즐겨찾기 토글 시 중앙 팝업 애니메이션 */
+.fav-indicator {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  z-index: 30;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fav-indicator.show { animation: favPop 0.8s ease-out forwards; }
+
+.fav-indicator svg {
+  width: 80px; height: 80px;
+  fill: #ffd700;
+  filter: drop-shadow(0 0 20px rgba(255,215,0,0.5));
+}
+
+@keyframes favPop {
+  0%   { transform: translate(-50%, -50%) scale(0);   opacity: 0; }
+  30%  { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+  60%  { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1);   opacity: 0; }
+}
+
+/* --- 토스트 알림 --- */
+.toast {
+  position: absolute;
+  top: 100px; left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  z-index: 50;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* --- 앨범 섹션 (하단 가로 스크롤 카드) --- */
+.album-section { background: transparent; padding: 20px 0 0; overflow: visible; }
+
+.album-scroll {
+  display: flex;
+  gap: 16px;
+  padding: 12px 20px 20px;
+  padding-left: calc(50% - 50px);
+  padding-right: calc(50% - 50px);
+  overflow-x: auto;
+  overflow-y: visible;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  cursor: grab;
+}
+
+.album-scroll::-webkit-scrollbar { display: none; }
+
+.album-card {
+  flex-shrink: 0;
+  width: 100px;
+  cursor: pointer;
+  transition: transform 0.3s, opacity 0.3s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  scroll-snap-align: center;
+  opacity: 0.4;
+}
+
+.album-card.active { transform: scale(1.15); opacity: 1; margin: 0 4px; }
+
+.album-thumb {
+  width: 100px; height: 100px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.album-thumb .count {
+  position: absolute; bottom: 6px; right: 6px;
+  font-size: 11px; font-weight: 600; color: #fff;
+  background: rgba(0,0,0,0.55);
+  padding: 2px 7px; border-radius: 8px;
+}
+
+.album-card .album-name {
+  font-size: 12px; font-weight: 500;
+  color: rgba(255,255,255,0.8);
+  text-align: center;
+  display: block; width: 100%;
+}
+
+/* 앨범 그라디언트 */
+.album-grad-1 { background: linear-gradient(135deg, #667eea, #764ba2); }
+.album-grad-2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
+.album-grad-3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.album-grad-4 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.album-grad-5 { background: linear-gradient(135deg, #fa709a, #fee140); }
+
+/* 앨범 추가 버튼 (점선 테두리) */
+.album-add-thumb {
+  width: 100px; height: 100px;
+  border-radius: 14px;
+  border: 2px dashed rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  transition: border-color 0.2s;
+}
+
+.album-add:hover .album-add-thumb { border-color: rgba(255,255,255,0.4); }
+
+/* --- 전체화면 보기 (탭하면 열림) --- */
+.fullview {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 50;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease;
+}
+
+.fullview.show { display: flex; }
+
+.fullview-close {
+  position: absolute;
+  top: 56px; right: 20px;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  z-index: 51;
+}
+
+.fullview-photo { width: 100%; height: 70%; }
+
+.fullview-info {
+  padding: 20px;
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fullview-info .fv-date { color: rgba(255,255,255,0.6); }
+.fullview-info .fv-loc  { color: rgba(255,255,255,0.35); font-size: 12px; }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* --- 도움말 팝업 --- */
+.help-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  z-index: 60;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease;
+}
+
+.help-overlay.show { display: flex; }
+
+.help-popup {
+  width: 300px;
+  background: #1c1c2e;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+
+.help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.help-title { font-size: 16px; font-weight: 700; color: #fff; }
+
+.help-close {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+
+.help-content { display: flex; flex-direction: column; gap: 16px; }
+.help-item { display: flex; align-items: center; gap: 14px; }
+
+.help-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: rgba(94,158,255,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  color: #5e9eff;
+}
+
+.help-text { display: flex; flex-direction: column; gap: 2px; }
+.help-text strong { font-size: 13px; font-weight: 600; color: #fff; }
+.help-text span   { font-size: 12px; color: rgba(255,255,255,0.4); }
+
+/* --- 조이스틱 (사진 위 드래그 시 나타남) --- */
+.joystick-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: none;
+}
+
+.joystick-overlay.visible { display: block; }
+
+.joystick-base {
+  position: absolute;
+  width: 140px; height: 140px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  transform: translate(-50%, -50%);
+}
+
+.joystick-knob {
+  position: absolute;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.25), rgba(255,255,255,0.08));
+  border: 2px solid rgba(255,255,255,0.2);
+  transform: translate(-50%, -50%);
+  left: 50%; top: 50%;
+  transition: left 0.08s, top 0.08s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* --- 라이트 테마 오버라이드 --- */
+.light .phone-frame          { background: #fff; border-color: #ddd; }
+.light .notch                { background: #f5f5f7; }
+.light .screen               { background: #f5f5f7; }
+.light .status-bar           { background: #f5f5f7; }
+.light .status-bar .time     { color: #000; }
+.light .status-icons svg     { fill: #000; }
+.light .top-bar              { background: #f5f5f7; }
+.light .back-btn svg         { stroke: #000; }
+.light .header-msg           { color: rgba(0,0,0,0.6); }
+.light .header-icon svg      { stroke: rgba(0,0,0,0.7); }
+.light .save-btn             { background: #007aff; }
+.light .photo-area           { background: #f5f5f7; }
+.light .photo-date           { color: rgba(0,0,0,0.5); }
+.light .photo-location       { color: rgba(0,0,0,0.35); }
+.light .fav-star svg         { fill: #333; }
+.light .album-section        { background: transparent; }
+.light .album-card .album-name { color: rgba(0,0,0,0.7); }
+.light .album-add-thumb      { border-color: rgba(0,0,0,0.15); }
+.light .album-add-thumb svg  { stroke: rgba(0,0,0,0.4); }
+.light .help-popup           { background: #fff; box-shadow: 0 16px 48px rgba(0,0,0,0.15); }
+.light .help-title           { color: #000; }
+.light .help-close           { color: rgba(0,0,0,0.4); background: rgba(0,0,0,0.06); }
+.light .help-icon            { background: rgba(0,122,255,0.08); color: #007aff; }
+.light .help-text strong     { color: #000; }
+.light .help-text span       { color: rgba(0,0,0,0.4); }
+</style>
+</head>
+<body>
+
+<!-- ==========================================
+     폰 프레임 시작
+     ========================================== -->
+<div class="phone-frame">
+  <div class="notch"></div>
+  <div class="screen">
+
+    <!-- 상태 바 -->
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <div class="status-icons">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="2" y="6" width="18" height="12" rx="2" stroke="white" stroke-width="2" fill="none"/><rect x="20" y="10" width="2" height="4" rx="1" fill="white"/><rect x="5" y="9" width="8" height="6" rx="1" fill="white"/></svg>
+      </div>
+    </div>
+
+    <!-- 상단 바: 뒤로가기 / 테마토글 / 도움말 / 저장 -->
+    <div class="top-bar">
+      <div class="back-btn">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="#fff" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <span class="header-msg" id="headerMsg"></span>
+      <div class="header-right">
+        <!-- 다크/라이트 테마 토글 -->
+        <div class="header-icon" id="themeToggle">
+          <svg id="moonIcon" viewBox="0 0 24 24" width="20" height="20" stroke="rgba(255,255,255,0.7)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="sunIcon" viewBox="0 0 24 24" width="20" height="20" stroke="rgba(0,0,0,0.7)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </div>
+        <!-- 도움말 버튼 -->
+        <div class="header-icon" id="helpBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="rgba(255,255,255,0.7)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="save-btn">저장</div>
+      </div>
+    </div>
+
+    <!-- 사진 영역 -->
+    <div class="photo-area" id="photoArea">
+
+      <!-- 사진 메타 정보 -->
+      <div class="photo-meta">
+        <span class="photo-date" id="photoDate">2025년 2월 8일 오후 3:24</span>
+        <span class="photo-location" id="photoLocation">서울특별시 강남구</span>
+      </div>
+
+      <!-- 필름스트립 썸네일 -->
+      <div class="filmstrip" id="filmstrip">
+        <div class="film-thumb active" data-index="0"><div class="film-img grad-1"></div></div>
+        <div class="film-thumb" data-index="1"><div class="film-img grad-2"></div></div>
+        <div class="film-thumb" data-index="2"><div class="film-img grad-3"></div></div>
+        <div class="film-thumb" data-index="3"><div class="film-img grad-4"></div></div>
+        <div class="film-thumb" data-index="4"><div class="film-img grad-5"></div></div>
+      </div>
+
+      <!-- 사진 슬라이더 (조이스틱 인터랙션 대상) -->
+      <div class="photo-container">
+        <div class="photo-slider" id="photoSlider">
+          <!-- 즐겨찾기 별표 -->
+          <div class="fav-star" id="favStar">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+          </div>
+          <!-- 사진 슬라이드 5장 -->
+          <div class="photo-slide current grad-1" data-index="0">
+            <div class="sun"></div>
+            <div class="landscape">
+              <div class="mountain mountain-3"></div>
+              <div class="mountain mountain-1"></div>
+              <div class="mountain mountain-2"></div>
+              <div class="water"></div>
+            </div>
+          </div>
+          <div class="photo-slide right grad-2" data-index="1"></div>
+          <div class="photo-slide right grad-3" data-index="2"></div>
+          <div class="photo-slide right grad-4" data-index="3"></div>
+          <div class="photo-slide right grad-5" data-index="4"></div>
+        </div>
+      </div>
+
+      <!-- 즐겨찾기 팝업 애니메이션 -->
+      <div class="fav-indicator" id="favIndicator">
+        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+      </div>
+
+      <!-- 토스트 알림 -->
+      <div class="toast" id="toast"></div>
+    </div>
+
+    <!-- 앨범 카드 섹션 -->
+    <div class="album-section">
+      <div class="album-scroll" id="albumScroll">
+        <div class="album-card"><div class="album-thumb album-grad-1"><span class="count">24</span></div><span class="album-name">최근 항목</span></div>
+        <div class="album-card"><div class="album-thumb album-grad-2"><span class="count">12</span></div><span class="album-name">즐겨찾기</span></div>
+        <div class="album-card"><div class="album-thumb album-grad-3"><span class="count">8</span></div><span class="album-name">현장 사진</span></div>
+        <div class="album-card"><div class="album-thumb album-grad-4"><span class="count">15</span></div><span class="album-name">스크린샷</span></div>
+        <div class="album-card"><div class="album-thumb album-grad-5"><span class="count">6</span></div><span class="album-name">문서</span></div>
+        <div class="album-card album-add">
+          <div class="album-thumb album-add-thumb">
+            <svg viewBox="0 0 24 24" width="32" height="32" stroke="rgba(255,255,255,0.5)" fill="none" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </div>
+          <span class="album-name">추가</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.screen -->
+
+  <!-- 전체화면 보기 (한 번 탭으로 열림) -->
+  <div class="fullview" id="fullview">
+    <div class="fullview-close" id="fullviewClose">✕</div>
+    <div class="fullview-photo" id="fullviewPhoto"></div>
+    <div class="fullview-info" id="fullviewInfo"></div>
+  </div>
+
+  <!-- 사진 정리 도움말 팝업 -->
+  <div class="help-overlay" id="helpOverlay">
+    <div class="help-popup">
+      <div class="help-header">
+        <span class="help-title">사진 정리 도움말</span>
+        <div class="help-close" id="helpClose">✕</div>
+      </div>
+      <div class="help-content">
+        <!-- 좌우 드래그: 사진 이동 -->
+        <div class="help-item">
+          <div class="help-icon">←→</div>
+          <div class="help-text">
+            <strong>좌우 드래그</strong>
+            <span>이전/다음 사진으로 이동</span>
+          </div>
+        </div>
+        <!-- 위로 드래그: 삭제 -->
+        <div class="help-item">
+          <div class="help-icon">↑</div>
+          <div class="help-text">
+            <strong>위로 드래그 <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:middle;margin-left:2px" fill="none" stroke="#ff4d4f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></strong>
+            <span>사진 삭제</span>
+          </div>
+        </div>
+        <!-- 아래로 드래그: 앨범 추가 -->
+        <div class="help-item">
+          <div class="help-icon">↓</div>
+          <div class="help-text">
+            <strong>아래로 드래그 <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:middle;margin-left:2px" fill="none" stroke="#5e9eff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></strong>
+            <span>선택한 앨범에 추가</span>
+          </div>
+        </div>
+        <!-- 한 번 탭: 자세히 보기 -->
+        <div class="help-item">
+          <div class="help-icon" style="color:#34c759;background:rgba(52,199,89,0.12)">·</div>
+          <div class="help-text">
+            <strong>한 번 탭</strong>
+            <span>사진 자세히 보기</span>
+          </div>
+        </div>
+        <!-- 두 번 탭: 실행 취소 -->
+        <div class="help-item">
+          <div class="help-icon" style="color:#34c759;background:rgba(52,199,89,0.12)">··</div>
+          <div class="help-text">
+            <strong>두 번 탭 <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:middle;margin-left:2px" fill="none" stroke="#34c759" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg></strong>
+            <span>실행 취소</span>
+          </div>
+        </div>
+        <!-- 꾹 누르기: 즐겨찾기 -->
+        <div class="help-item">
+          <div class="help-icon" style="color:#34c759;background:rgba(52,199,89,0.12)">—</div>
+          <div class="help-text">
+            <strong>꾹 누르기 <svg viewBox="0 0 24 24" width="14" height="14" style="vertical-align:middle;margin-left:2px" fill="#ffd700" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg></strong>
+            <span>즐겨찾기 토글</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.phone-frame -->
+
+<!-- 조이스틱 오버레이 (사진 위 포인터다운 시 나타남) -->
+<div class="joystick-overlay" id="joyOverlay">
+  <div class="joystick-base" id="joyBase">
+    <div class="joystick-knob" id="joyKnob"></div>
+  </div>
+</div>
+
+<script>
+/* ==========================================
+   갤러리 앱 목업 - 스크립트
+   ==========================================
+   조이스틱 기반 사진 정리 인터랙션:
+   - 좌/우 드래그 → 이전/다음 사진
+   - 위로 드래그   → 삭제
+   - 아래로 드래그 → 선택된 앨범에 추가
+   - 한 번 탭     → 전체화면 보기
+   - 두 번 탭     → 실행 취소
+   - 꾹 누르기    → 즐겨찾기 토글
+   ========================================== */
+
+// ===== 사진 데이터 =====
+const photos = [
+  { date: '2025년 2월 8일 오후 3:24', location: '서울특별시 강남구',  ratio: 'portrait' },
+  { date: '2025년 2월 7일 오전 11:05', location: '서울특별시 종로구',  ratio: 'landscape' },
+  { date: '2025년 2월 5일 오후 6:30',  location: '경기도 성남시',      ratio: 'portrait' },
+  { date: '2025년 2월 3일 오후 1:12',  location: '서울특별시 마포구',  ratio: 'square' },
+  { date: '2025년 1월 30일 오전 9:45', location: '인천광역시 연수구',  ratio: 'portrait' },
+];
+
+// 비율 매핑 (portrait: 세로, landscape: 가로, square: 정사각형)
+const ratioMap = { portrait: '9/12', landscape: '16/9', square: '1/1' };
+
+// ===== DOM 참조 =====
+const slides        = document.querySelectorAll('.photo-slide');
+const filmThumbs    = document.querySelectorAll('.film-thumb');
+const filmstrip     = document.getElementById('filmstrip');
+const photoSliderEl = document.getElementById('photoSlider');
+const dateEl        = document.getElementById('photoDate');
+const locEl         = document.getElementById('photoLocation');
+const favStar       = document.getElementById('favStar');
+const fullview      = document.getElementById('fullview');
+const fullviewPhoto = document.getElementById('fullviewPhoto');
+const fullviewInfo  = document.getElementById('fullviewInfo');
+const overlay       = document.getElementById('joyOverlay');
+const base          = document.getElementById('joyBase');
+const knob          = document.getElementById('joyKnob');
+const albumScroll   = document.getElementById('albumScroll');
+const cards         = document.querySelectorAll('.album-card');
+const phoneFrame    = document.querySelector('.phone-frame');
+const moonIcon      = document.getElementById('moonIcon');
+const sunIcon       = document.getElementById('sunIcon');
+const helpOverlay   = document.getElementById('helpOverlay');
+
+// ===== 상태 변수 =====
+let currentPhoto = 0;                                    // 현재 보고 있는 사진 인덱스
+const favorites = new Array(photos.length).fill(false);  // 즐겨찾기 상태 배열
+let isLight = false;                                     // 라이트 테마 여부
+let msgTimer;                                            // 토스트 타이머
+
+// 조이스틱 관련
+let joyActive = false;                   // 조이스틱 활성화 여부
+let joyCenter = { x: 0, y: 0 };         // 조이스틱 중심 좌표
+let swipeTriggered = false;              // 스와이프 액션 발동 여부 (중복 방지)
+let hasMoved = false;                    // 포인터가 이동했는지 여부
+const MAX_DIST = 50;                     // 노브 최대 이동 거리 (px)
+
+// 탭/롱프레스 관련
+let tapCount = 0;                        // 연속 탭 횟수
+let tapTimer = null;                     // 더블탭 판별 타이머
+let touchStartTime = 0;                  // 터치 시작 시간 (ms)
+let startPos = { x: 0, y: 0 };          // 터치 시작 좌표
+
+
+// ===== 사진 네비게이션 =====
+
+/**
+ * 슬라이드 상태 업데이트
+ * - current/left/right 클래스 토글
+ * - 필름스트립 활성 썸네일 변경
+ * - 메타 정보(날짜, 위치) 갱신
+ * - 사진 비율 CSS 변수 갱신
+ */
+function updateSlides() {
+  slides.forEach((s, i) => {
+    s.classList.remove('current', 'left', 'right');
+    s.classList.add(i === currentPhoto ? 'current' : i < currentPhoto ? 'left' : 'right');
+  });
+
+  filmThumbs.forEach((t, i) => t.classList.toggle('active', i === currentPhoto));
+  dateEl.textContent = photos[currentPhoto].date;
+  locEl.textContent = photos[currentPhoto].location;
+  photoSliderEl.style.setProperty('--photo-ratio', ratioMap[photos[currentPhoto].ratio]);
+
+  // 활성 썸네일을 필름스트립 중앙으로 스크롤
+  const activeThumb = filmThumbs[currentPhoto];
+  if (activeThumb) {
+    filmstrip.scrollTo({
+      left: activeThumb.offsetLeft - filmstrip.offsetWidth / 2 + activeThumb.offsetWidth / 2,
+      behavior: 'smooth'
+    });
+  }
+
+  updateFavStar();
+}
+
+/** 다음 사진으로 이동 */
+function nextPhoto() { if (currentPhoto < slides.length - 1) { currentPhoto++; updateSlides(); } }
+
+/** 이전 사진으로 이동 */
+function prevPhoto() { if (currentPhoto > 0) { currentPhoto--; updateSlides(); } }
+
+// 필름스트립 썸네일 클릭 → 해당 사진으로 점프
+filmThumbs.forEach((thumb, i) => {
+  thumb.addEventListener('click', () => { currentPhoto = i; updateSlides(); });
+});
+
+
+// ===== 전체화면 보기 =====
+
+/** 현재 사진을 전체화면으로 표시 */
+function toggleFullView() {
+  const classes = Array.from(slides[currentPhoto].classList).filter(c => c.startsWith('grad-'));
+  fullviewPhoto.className = 'fullview-photo ' + classes.join(' ');
+  fullviewInfo.innerHTML = `<span class="fv-date">${photos[currentPhoto].date}</span><span class="fv-loc">${photos[currentPhoto].location}</span>`;
+  fullview.classList.add('show');
+}
+
+// 전체화면 닫기
+document.getElementById('fullviewClose').addEventListener('click', () => fullview.classList.remove('show'));
+fullview.addEventListener('click', (e) => { if (e.target === fullview) fullview.classList.remove('show'); });
+
+
+// ===== 헤더 토스트 메시지 =====
+
+/** 상단 바에 짧은 피드백 메시지 표시 (1.5초 후 사라짐) */
+function showToast(msg) {
+  const headerMsg = document.getElementById('headerMsg');
+  headerMsg.textContent = msg;
+  headerMsg.classList.add('show');
+  clearTimeout(msgTimer);
+  msgTimer = setTimeout(() => headerMsg.classList.remove('show'), 1500);
+}
+
+
+// ===== 즐겨찾기 =====
+
+/** 현재 사진의 즐겨찾기 별표 표시/숨김 */
+function updateFavStar() { favStar.classList.toggle('show', favorites[currentPhoto]); }
+
+/** 즐겨찾기 토글 + 중앙 팝업 애니메이션 */
+function showFavorite() {
+  favorites[currentPhoto] = !favorites[currentPhoto];
+  updateFavStar();
+  const fav = document.getElementById('favIndicator');
+  fav.classList.remove('show');
+  void fav.offsetWidth; // reflow 트리거 (애니메이션 재시작)
+  fav.classList.add('show');
+}
+
+
+// ===== 사진 액션 =====
+
+/** 사진 삭제 애니메이션 (위로 사라졌다가 복귀) */
+function deletePhoto() {
+  const slide = slides[currentPhoto];
+  slide.style.transition = 'opacity 0.3s, transform 0.4s';
+  slide.style.opacity = '0';
+  slide.style.transform = 'translateY(-50%)';
+  setTimeout(() => {
+    slide.style.transition = '';
+    slide.style.opacity = '';
+    slide.style.transform = '';
+    updateSlides();
+  }, 500);
+}
+
+/** 선택된 앨범에 사진 추가 (바운스 애니메이션) */
+function addToSelectedAlbum() {
+  const activeAlbum = document.querySelector('.album-card.active');
+  if (!activeAlbum) return;
+  activeAlbum.style.transition = 'transform 0.15s';
+  activeAlbum.style.transform = 'scale(1.3)';
+  setTimeout(() => {
+    activeAlbum.style.transform = 'scale(1.15)';
+    activeAlbum.style.transition = 'transform 0.3s, opacity 0.3s';
+  }, 200);
+}
+
+
+// ===== 조이스틱 =====
+
+/** 조이스틱 표시 (포인터다운 위치에 생성) */
+function showJoystick(x, y) {
+  joyActive = true;
+  swipeTriggered = false;
+  joyCenter = { x, y };
+  base.style.left = x + 'px';
+  base.style.top = y + 'px';
+  knob.style.left = '50%';
+  knob.style.top = '50%';
+  overlay.classList.add('visible');
+}
+
+/** 조이스틱 숨김 */
+function hideJoystick() { joyActive = false; overlay.classList.remove('visible'); }
+
+/**
+ * 노브 위치 업데이트 + 방향별 액션 트리거
+ * - 좌/우 threshold 초과 → 사진 전환
+ * - 아래 threshold 초과 → 앨범 추가
+ * - 위 threshold 초과   → 사진 삭제
+ */
+function moveKnob(x, y) {
+  const dx = x - joyCenter.x, dy = y - joyCenter.y;
+  const dist = Math.min(Math.sqrt(dx * dx + dy * dy), MAX_DIST);
+  const angle = Math.atan2(dy, dx);
+  const cx = dist * Math.cos(angle), cy = dist * Math.sin(angle);
+
+  knob.style.left = `calc(50% + ${cx}px)`;
+  knob.style.top = `calc(50% + ${cy}px)`;
+
+  if (!swipeTriggered) {
+    const threshold = 35;
+    if (Math.abs(cx) > threshold)  { swipeTriggered = true; cx > 0 ? prevPhoto() : nextPhoto(); }
+    else if (cy > threshold)       { swipeTriggered = true; addToSelectedAlbum(); }
+    else if (cy < -threshold)      { swipeTriggered = true; deletePhoto(); }
+  }
+}
+
+// --- 포인터 이벤트 (사진 슬라이더) ---
+
+// 포인터 다운 → 조이스틱 즉시 표시
+photoSliderEl.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  photoSliderEl.setPointerCapture(e.pointerId);
+  touchStartTime = Date.now();
+  startPos = { x: e.clientX, y: e.clientY };
+  hasMoved = false;
+  showJoystick(e.clientX, e.clientY);
+});
+
+// 포인터 이동 → 노브 추적 + 이동 감지
+photoSliderEl.addEventListener('pointermove', (e) => {
+  if (!joyActive) return;
+  e.preventDefault();
+  const dx = e.clientX - startPos.x, dy = e.clientY - startPos.y;
+  if (Math.sqrt(dx * dx + dy * dy) > 8) hasMoved = true;
+  moveKnob(e.clientX, e.clientY);
+});
+
+/**
+ * 포인터 업 → 제스처 판별
+ * - 이동 없음 + 600ms 이상 → 꾹 누르기 (즐겨찾기)
+ * - 이동 없음 + 300ms 미만 → 탭 (1회: 전체화면, 2회: 실행 취소)
+ * - 이동 있음 → 조이스틱 스와이프 (이미 moveKnob에서 처리됨)
+ */
+photoSliderEl.addEventListener('pointerup', () => {
+  const elapsed = Date.now() - touchStartTime;
+  if (!joyActive) return;
+
+  if (!hasMoved && elapsed > 600) {
+    // 꾹 누르기 → 즐겨찾기 토글
+    showFavorite();
+  } else if (!hasMoved && elapsed < 300) {
+    // 빠른 탭 → 탭 카운트 처리
+    hideJoystick();
+    tapCount++;
+    if (tapCount === 1) {
+      tapTimer = setTimeout(() => { toggleFullView(); tapCount = 0; }, 280);
+    } else if (tapCount === 2) {
+      clearTimeout(tapTimer);
+      tapCount = 0;
+      // TODO: 실행 취소 로직 구현
+    }
+    return;
+  }
+  hideJoystick();
+});
+
+// 포인터가 슬라이더 밖으로 나가면 조이스틱 닫기
+photoSliderEl.addEventListener('pointerleave', () => { if (joyActive) hideJoystick(); });
+
+// 우클릭 컨텍스트 메뉴 방지
+photoSliderEl.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// 오버레이 위에서도 노브 추적 유지
+overlay.addEventListener('pointermove', (e) => { if (joyActive) moveKnob(e.clientX, e.clientY); });
+
+
+// ===== 앨범 스크롤 =====
+
+/**
+ * 가장 가까운 앨범 카드에 active 클래스 부여
+ * (스크롤 중앙에 가장 가까운 카드를 활성화)
+ */
+function updateActiveAlbum() {
+  const center = albumScroll.scrollLeft + albumScroll.offsetWidth / 2;
+  let closest = null, minDist = Infinity;
+  cards.forEach(card => {
+    const d = Math.abs(card.offsetLeft + card.offsetWidth / 2 - center);
+    if (d < minDist) { minDist = d; closest = card; }
+  });
+  cards.forEach(c => c.classList.remove('active'));
+  if (closest) closest.classList.add('active');
+}
+
+albumScroll.addEventListener('scroll', updateActiveAlbum);
+
+// 마우스 드래그로 앨범 스크롤 가능하게 처리
+let albumDown = false, albumStartX, albumScrollLeft;
+albumScroll.addEventListener('mousedown',  (e) => { albumDown = true; albumScroll.style.cursor = 'grabbing'; albumStartX = e.pageX; albumScrollLeft = albumScroll.scrollLeft; });
+albumScroll.addEventListener('mouseleave', ()  => { albumDown = false; albumScroll.style.cursor = 'grab'; });
+albumScroll.addEventListener('mouseup',    ()  => { albumDown = false; albumScroll.style.cursor = 'grab'; });
+albumScroll.addEventListener('mousemove',  (e) => { if (!albumDown) return; e.preventDefault(); albumScroll.scrollLeft = albumScrollLeft - (e.pageX - albumStartX) * 1.5; });
+
+// 초기 로드 시 중간 앨범을 중앙에 위치
+setTimeout(() => {
+  const mid = cards[Math.floor(cards.length / 2)];
+  albumScroll.scrollLeft = mid.offsetLeft - albumScroll.offsetWidth / 2 + mid.offsetWidth / 2;
+  updateActiveAlbum();
+}, 50);
+
+
+// ===== 테마 토글 (다크 ↔ 라이트) =====
+document.getElementById('themeToggle').addEventListener('click', () => {
+  isLight = !isLight;
+  phoneFrame.classList.toggle('light', isLight);
+  moonIcon.style.display = isLight ? 'none' : 'block';
+  sunIcon.style.display = isLight ? 'block' : 'none';
+});
+
+
+// ===== 도움말 팝업 =====
+document.getElementById('helpBtn').addEventListener('click', () => helpOverlay.classList.add('show'));
+document.getElementById('helpClose').addEventListener('click', () => helpOverlay.classList.remove('show'));
+helpOverlay.addEventListener('click', (e) => { if (e.target === helpOverlay) helpOverlay.classList.remove('show'); });
+</script>
+
+</body>
+</html>
