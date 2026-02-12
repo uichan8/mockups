@@ -1,8 +1,247 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta http-equiv="refresh" content="0; url=gallering/photo_organizer.html">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockups - 앱 목업 모음</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f23;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 0 20px 60px;
+    }
+
+    header {
+      text-align: center;
+      padding: 60px 0 40px;
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      font-size: 1rem;
+      color: #888;
+    }
+
+    .project-list {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .project-card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+
+    .project-card:hover {
+      border-color: #4a4a7a;
+    }
+
+    .project-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .project-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .project-name {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .project-desc {
+      font-size: 0.85rem;
+      color: #888;
+    }
+
+    .project-arrow {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .project-arrow svg {
+      width: 20px;
+      height: 20px;
+      fill: none;
+      stroke: #888;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .project-card.open .project-arrow {
+      transform: rotate(180deg);
+    }
+
+    .project-pages {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease;
+    }
+
+    .project-pages-inner {
+      padding: 0 24px 16px;
+      border-top: 1px solid #2a2a4a;
+    }
+
+    .page-link {
+      display: block;
+      padding: 12px 16px;
+      margin-top: 8px;
+      background: #16162b;
+      border-radius: 8px;
+      color: #c0c0e0;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .page-link:hover {
+      background: #22224a;
+      color: #ffffff;
+    }
+
+    .page-link-name {
+      font-weight: 500;
+    }
+
+    .page-link-desc {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    @media (max-width: 480px) {
+      header {
+        padding: 40px 0 28px;
+      }
+
+      header h1 {
+        font-size: 1.8rem;
+      }
+
+      .project-header {
+        padding: 16px 18px;
+      }
+
+      .project-pages-inner {
+        padding: 0 18px 12px;
+      }
+    }
+  </style>
 </head>
 <body>
+  <header>
+    <h1>Mockups</h1>
+    <p>앱 아이디어를 빠르게 프로토타이핑하는 목업 모음</p>
+  </header>
+
+  <div class="project-list" id="projectList"></div>
+
+  <script>
+    /* ── 프로젝트 데이터 ── */
+    const projects = [
+      {
+        name: 'Gallering',
+        description: '사진 정리 앱',
+        pages: [
+          {
+            name: '포토 오거나이저',
+            description: '조이스틱 제스처로 사진을 분류하는 갤러리',
+            url: 'gallering/photo_organizer.html'
+          }
+        ]
+      }
+    ];
+
+    /* ── 렌더링 ── */
+    const listEl = document.getElementById('projectList');
+
+    projects.forEach((project, idx) => {
+      const card = document.createElement('div');
+      card.className = 'project-card';
+
+      const pagesHTML = project.pages.map(page => `
+        <a class="page-link" href="${page.url}">
+          <div class="page-link-name">${page.name}</div>
+          ${page.description ? `<div class="page-link-desc">${page.description}</div>` : ''}
+        </a>
+      `).join('');
+
+      card.innerHTML = `
+        <div class="project-header">
+          <div class="project-info">
+            <div class="project-name">${project.name}</div>
+            <div class="project-desc">${project.description}</div>
+          </div>
+          <div class="project-arrow">
+            <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div class="project-pages">
+          <div class="project-pages-inner">
+            ${pagesHTML}
+          </div>
+        </div>
+      `;
+
+      /* 아코디언 토글 */
+      const header = card.querySelector('.project-header');
+      const pagesEl = card.querySelector('.project-pages');
+
+      header.addEventListener('click', () => {
+        const isOpen = card.classList.contains('open');
+
+        if (isOpen) {
+          pagesEl.style.maxHeight = pagesEl.scrollHeight + 'px';
+          requestAnimationFrame(() => {
+            pagesEl.style.maxHeight = '0';
+          });
+          card.classList.remove('open');
+        } else {
+          pagesEl.style.maxHeight = pagesEl.scrollHeight + 'px';
+          card.classList.add('open');
+          pagesEl.addEventListener('transitionend', () => {
+            if (card.classList.contains('open')) {
+              pagesEl.style.maxHeight = 'none';
+            }
+          }, { once: true });
+        }
+      });
+
+      listEl.appendChild(card);
+    });
+  </script>
 </body>
 </html>
