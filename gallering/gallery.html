@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>갤러리</title>
+<style>
+/* ========================================
+   갤러리 목업 - iOS 사진 앱 스타일
+   ======================================== */
+
+/* --- 초기화 --- */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1a2e;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+
+/* --- 폰 프레임 (아이폰 스타일) --- */
+.phone-frame {
+  width: 375px;
+  height: 812px;
+  background: #000;
+  border-radius: 48px;
+  border: 4px solid #2a2a3e;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 0 0 2px #111, 0 20px 60px rgba(0,0,0,0.5);
+}
+
+/* 노치 */
+.notch {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 34px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 20;
+}
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* --- 상태 바 --- */
+.status-bar {
+  height: 54px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 28px 8px;
+  background: #000;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.status-bar .time { font-size: 15px; font-weight: 600; color: #fff; }
+.status-icons { display: flex; gap: 6px; align-items: center; }
+.status-icons svg { width: 16px; height: 16px; fill: #fff; }
+
+/* --- 상단 내비게이션 바 --- */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px 8px;
+  background: #000;
+  flex-shrink: 0;
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.top-bar-title {
+  font-size: 34px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+
+.top-bar-btn {
+  font-size: 17px;
+  color: #0a84ff;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 4px 8px;
+}
+
+.top-bar-btn:active { opacity: 0.5; }
+
+/* --- 세그먼트 컨트롤 --- */
+.segment-control {
+  display: flex;
+  margin: 0 16px 8px;
+  background: rgba(118, 118, 128, 0.24);
+  border-radius: 8px;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.segment-item {
+  flex: 1;
+  text-align: center;
+  padding: 6px 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.6);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.segment-item.active {
+  background: rgba(118, 118, 128, 0.4);
+  color: #fff;
+}
+
+/* --- 앱 콘텐츠 영역 --- */
+.app-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-content::-webkit-scrollbar { display: none; }
+
+/* --- 탭별 뷰 --- */
+.tab-view { display: none; flex-direction: column; }
+.tab-view.active { display: flex; }
+
+/* --- 라이브러리 뷰: 사진 그리드 --- */
+.date-section { margin-bottom: 2px; }
+
+.date-header {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  padding: 16px 16px 8px;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  padding: 0 2px;
+}
+
+.photo-item {
+  aspect-ratio: 1;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.photo-item img,
+.photo-item .photo-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 선택 모드 체크마크 */
+.photo-check {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: transparent;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.photo-check.checked {
+  background: #0a84ff;
+  border-color: #0a84ff;
+}
+
+.photo-check svg { opacity: 0; }
+.photo-check.checked svg { opacity: 1; }
+
+.select-mode .photo-check { display: flex; }
+
+/* 동영상 표시 */
+.video-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+.video-badge svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6)); }
+
+/* 즐겨찾기 하트 */
+.fav-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+}
+
+/* --- 앨범 뷰 --- */
+.albums-section {
+  padding: 0 16px;
+  margin-bottom: 24px;
+}
+
+.albums-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.albums-section-title .see-all {
+  font-size: 15px;
+  font-weight: 400;
+  color: #0a84ff;
+  cursor: pointer;
+}
+
+.my-albums-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.album-card {
+  cursor: pointer;
+}
+
+.album-cover {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 6px;
+  position: relative;
+}
+
+.album-cover .photo-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.album-name {
+  font-size: 14px;
+  color: #fff;
+  line-height: 1.3;
+}
+
+.album-count {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+}
+
+/* 미디어 유형 리스트 */
+.media-list {
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+
+.media-list-item {
+  display: flex;
+  align-items: center;
+  padding: 11px 16px;
+  cursor: pointer;
+  gap: 12px;
+}
+
+.media-list-item:not(:last-child) {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.media-list-item svg { flex-shrink: 0; }
+
+.media-list-item span {
+  flex: 1;
+  font-size: 16px;
+  color: #fff;
+}
+
+.media-list-item .count {
+  font-size: 16px;
+  color: rgba(255,255,255,0.4);
+}
+
+.media-list-item .chevron {
+  flex-shrink: 0;
+}
+
+/* --- 검색 뷰 --- */
+.search-bar {
+  margin: 0 16px 16px;
+  display: flex;
+  align-items: center;
+  background: rgba(118, 118, 128, 0.24);
+  border-radius: 10px;
+  padding: 8px 12px;
+  gap: 6px;
+}
+
+.search-bar svg { flex-shrink: 0; opacity: 0.5; }
+
+.search-bar input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  color: #fff;
+  font-family: inherit;
+}
+
+.search-bar input::placeholder { color: rgba(255,255,255,0.4); }
+
+.search-suggestions {
+  padding: 0 16px;
+}
+
+.search-category-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.search-places-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.search-place-item {
+  aspect-ratio: 16/9;
+  position: relative;
+  cursor: pointer;
+}
+
+.search-place-item .label {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+}
+
+.search-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.search-cat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.search-cat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-cat-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  text-align: center;
+}
+
+/* --- For You 뷰 --- */
+.for-you-section {
+  padding: 0 16px;
+  margin-bottom: 24px;
+}
+
+.for-you-card {
+  background: rgba(255,255,255,0.06);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.for-you-card-cover {
+  width: 100%;
+  aspect-ratio: 16/9;
+  position: relative;
+}
+
+.for-you-card-cover .photo-placeholder {
+  width: 100%;
+  height: 100%;
+}
+
+.for-you-card-info {
+  padding: 12px 16px;
+}
+
+.for-you-card-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.for-you-card-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+}
+
+/* --- 하단 탭 바 --- */
+.tab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 4px 0 2px;
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 4px 12px;
+  min-width: 50px;
+}
+
+.tab-item svg { transition: all 0.2s; }
+.tab-item span {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  transition: color 0.2s;
+}
+
+.tab-item.active svg { fill: #0a84ff; stroke: #0a84ff; }
+.tab-item.active span { color: #0a84ff; }
+
+/* --- 사진 상세 뷰 (풀스크린 오버레이) --- */
+.detail-overlay {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+}
+
+.detail-overlay.show {
+  display: flex;
+  animation: fadeIn 0.2s ease;
+}
+
+.detail-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 54px 16px 8px;
+  background: rgba(0,0,0,0.6);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 102;
+  transition: opacity 0.25s;
+}
+
+.detail-top-bar.hidden { opacity: 0; pointer-events: none; }
+
+.detail-close-btn {
+  font-size: 17px;
+  color: #0a84ff;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 4px 8px;
+}
+
+.detail-date {
+  font-size: 14px;
+  color: rgba(255,255,255,0.7);
+}
+
+.detail-more-btn {
+  color: #0a84ff;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+}
+
+/* 사진 표시 영역 */
+.detail-photo-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.detail-photo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.detail-photo .photo-placeholder {
+  width: 100%;
+  max-height: 100%;
+}
+
+/* 하단 툴바 */
+.detail-bottom-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 16px 34px;
+  background: rgba(0,0,0,0.6);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 102;
+  transition: opacity 0.25s;
+}
+
+.detail-bottom-bar.hidden { opacity: 0; pointer-events: none; }
+
+.detail-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 8px;
+  color: #0a84ff;
+}
+
+.detail-action svg { fill: none; stroke: #0a84ff; }
+.detail-action.fav-active svg { fill: #ff453a; stroke: #ff453a; }
+
+/* --- 선택 모드 하단 액션 바 --- */
+.select-action-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 16px 2px;
+  background: rgba(30, 30, 30, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+
+.select-mode .select-action-bar { display: flex; }
+.select-mode .tab-bar { display: none; }
+
+.select-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 12px;
+  color: #0a84ff;
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.select-action-btn svg { fill: none; stroke: #0a84ff; }
+.select-action-btn.danger { color: #ff453a; }
+.select-action-btn.danger svg { stroke: #ff453a; }
+
+/* --- 토스트 알림 --- */
+.toast {
+  position: absolute;
+  top: 100px; left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  z-index: 200;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* --- 홈 인디케이터 --- */
+.home-indicator {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  flex-shrink: 0;
+}
+
+.home-indicator-bar {
+  width: 134px;
+  height: 5px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+}
+
+/* --- fadeIn 애니메이션 --- */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ========================================
+   라이트 테마 오버라이드
+   ======================================== */
+.light .status-bar        { background: #f2f2f7; }
+.light .status-bar .time  { color: #000; }
+.light .status-icons svg  { fill: #000; }
+.light .top-bar           { background: #f2f2f7; }
+.light .top-bar-title     { color: #000; }
+.light .top-bar-btn       { color: #007aff; }
+.light .segment-control   { background: rgba(118, 118, 128, 0.12); }
+.light .segment-item      { color: rgba(0,0,0,0.5); }
+.light .segment-item.active { background: #fff; color: #000; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.light .app-content       { background: #fff; }
+.light .date-header       { color: #000; }
+.light .tab-bar           { background: rgba(249, 249, 249, 0.94); border-top-color: rgba(0,0,0,0.1); }
+.light .tab-item span     { color: rgba(0,0,0,0.4); }
+.light .tab-item.active svg { fill: #007aff; stroke: #007aff; }
+.light .tab-item.active span { color: #007aff; }
+.light .albums-section-title { color: #000; }
+.light .albums-section-title .see-all { color: #007aff; }
+.light .album-name        { color: #000; }
+.light .album-count       { color: rgba(0,0,0,0.5); }
+.light .media-list        { background: rgba(0,0,0,0.04); }
+.light .media-list-item span { color: #000; }
+.light .media-list-item .count { color: rgba(0,0,0,0.4); }
+.light .media-list-item:not(:last-child) { border-bottom-color: rgba(0,0,0,0.08); }
+.light .search-bar        { background: rgba(118, 118, 128, 0.12); }
+.light .search-bar input  { color: #000; }
+.light .search-bar input::placeholder { color: rgba(0,0,0,0.4); }
+.light .search-category-title { color: #000; }
+.light .search-cat-label  { color: rgba(0,0,0,0.6); }
+.light .for-you-card      { background: rgba(0,0,0,0.04); }
+.light .for-you-card-title { color: #000; }
+.light .for-you-card-sub  { color: rgba(0,0,0,0.5); }
+.light .select-action-bar { background: rgba(249, 249, 249, 0.94); border-top-color: rgba(0,0,0,0.1); }
+.light .home-indicator    { background: #f2f2f7; }
+.light .home-indicator-bar { background: rgba(0,0,0,0.15); }
+
+/* --- 반응형 --- */
+@media (max-width: 480px) {
+  .phone-frame { border-radius: 0; border: none; width: 100vw; height: 100vh; box-shadow: none; }
+  .notch { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="phone-frame" id="phoneFrame">
+  <div class="notch"></div>
+  <div class="screen">
+
+    <!-- 상태 바 -->
+    <div class="status-bar">
+      <span class="time" id="statusTime">9:41</span>
+      <div class="status-icons">
+        <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="2" y="6" width="18" height="12" rx="2" stroke="white" stroke-width="2" fill="none"/><rect x="20" y="10" width="2" height="4" rx="1" fill="white"/><rect x="5" y="9" width="8" height="6" rx="1" fill="white"/></svg>
+      </div>
+    </div>
+
+    <!-- 상단 바 -->
+    <div class="top-bar" id="topBar">
+      <span class="top-bar-title" id="topBarTitle">보관함</span>
+      <button class="top-bar-btn" id="selectBtn" onclick="toggleSelectMode()">선택</button>
+    </div>
+
+    <!-- 세그먼트 컨트롤 (보관함 탭에서만 표시) -->
+    <div class="segment-control" id="segmentControl">
+      <div class="segment-item" data-segment="years" onclick="switchSegment('years')">연도</div>
+      <div class="segment-item" data-segment="months" onclick="switchSegment('months')">월별</div>
+      <div class="segment-item" data-segment="days" onclick="switchSegment('days')">일별</div>
+      <div class="segment-item active" data-segment="all" onclick="switchSegment('all')">모든 사진</div>
+    </div>
+
+    <!-- 앱 콘텐츠 영역 -->
+    <div class="app-content" id="appContent">
+
+      <!-- ===== 보관함 탭 ===== -->
+      <div class="tab-view active" id="tabLibrary">
+        <!-- 사진 그리드가 JS로 렌더링됨 -->
+      </div>
+
+      <!-- ===== For You 탭 ===== -->
+      <div class="tab-view" id="tabForYou">
+        <div class="for-you-section" style="margin-top:8px;">
+          <div class="albums-section-title">추억</div>
+          <div class="for-you-card" onclick="showToast('추억 재생')">
+            <div class="for-you-card-cover">
+              <div class="photo-placeholder" style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460,#533483);width:100%;height:100%;"></div>
+            </div>
+            <div class="for-you-card-info">
+              <div class="for-you-card-title">지난 겨울</div>
+              <div class="for-you-card-sub">2024년 12월 15일 – 2025년 1월 20일</div>
+            </div>
+          </div>
+          <div class="for-you-card" onclick="showToast('추억 재생')">
+            <div class="for-you-card-cover">
+              <div class="photo-placeholder" style="background:linear-gradient(135deg,#ff6b6b,#ffa07a,#ffd93d);width:100%;height:100%;"></div>
+            </div>
+            <div class="for-you-card-info">
+              <div class="for-you-card-title">가을 나들이</div>
+              <div class="for-you-card-sub">2024년 10월 5일 – 10월 20일</div>
+            </div>
+          </div>
+        </div>
+        <div class="for-you-section">
+          <div class="albums-section-title">추천 사진</div>
+          <div class="for-you-card" onclick="showToast('추천 사진 보기')">
+            <div class="for-you-card-cover">
+              <div class="photo-placeholder" style="background:linear-gradient(135deg,#43e97b,#38f9d7);width:100%;height:100%;"></div>
+            </div>
+            <div class="for-you-card-info">
+              <div class="for-you-card-title">오늘의 추천</div>
+              <div class="for-you-card-sub">최근 촬영한 사진 중 베스트</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 앨범 탭 ===== -->
+      <div class="tab-view" id="tabAlbums">
+        <!-- 나의 앨범 -->
+        <div class="albums-section" style="margin-top:8px;">
+          <div class="albums-section-title">
+            나의 앨범
+            <span class="see-all" onclick="showToast('모두 보기')">모두 보기</span>
+          </div>
+          <div class="my-albums-grid" id="albumsGrid">
+            <!-- JS로 렌더링 -->
+          </div>
+        </div>
+
+        <!-- 사람들 및 장소 -->
+        <div class="albums-section">
+          <div class="albums-section-title">사람들 및 장소</div>
+          <div class="media-list">
+            <div class="media-list-item" onclick="showToast('사람들')">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0a84ff" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+              <span>사람들</span>
+              <span class="count">12</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+            </div>
+            <div class="media-list-item" onclick="showToast('장소')">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0a84ff" stroke-width="1.5"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              <span>장소</span>
+              <span class="count">8</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- 미디어 유형 -->
+        <div class="albums-section">
+          <div class="albums-section-title">미디어 유형</div>
+          <div class="media-list">
+            <div class="media-list-item" onclick="showToast('동영상')">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0a84ff" stroke-width="1.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              <span>동영상</span>
+              <span class="count">23</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+            </div>
+            <div class="media-list-item" onclick="showToast('셀피')">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0a84ff" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/><path d="M7 20.662V19a2 2 0 012-2h6a2 2 0 012 2v1.662"/></svg>
+              <span>셀피</span>
+              <span class="count">45</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+            </div>
+            <div class="media-list-item" onclick="showToast('Live Photo')">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0a84ff" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8" stroke-dasharray="4 3"/></svg>
+              <span>Live Photo</span>
+              <span class="count">31</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+            </div>
+            <div class="media-list-item" onclick="showToast('스크린샷')">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0a84ff" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="3"/><line x1="12" y1="18" x2="12" y2="18.01" stroke-width="2" stroke-linecap="round"/></svg>
+              <span>스크린샷</span>
+              <span class="count">67</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- 기타 -->
+        <div class="albums-section" style="margin-bottom:16px;">
+          <div class="albums-section-title">기타</div>
+          <div class="media-list">
+            <div class="media-list-item" onclick="showToast('가져오기')">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0a84ff" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>가져오기</span>
+              <span class="count">12</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+            </div>
+            <div class="media-list-item" onclick="showToast('가려진 항목')">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0a84ff" stroke-width="1.5"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              <span>가려진 항목</span>
+              <span class="count">3</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+            </div>
+            <div class="media-list-item" onclick="showToast('최근 삭제된 항목')">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#0a84ff" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              <span>최근 삭제된 항목</span>
+              <span class="count">5</span>
+              <svg class="chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="2"><polyline points="9 6 15 12 9 18"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 검색 탭 ===== -->
+      <div class="tab-view" id="tabSearch">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#fff" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="검색" readonly onclick="showToast('검색 기능 데모')">
+        </div>
+        <div class="search-suggestions">
+          <div class="search-category-title">장소</div>
+          <div class="search-places-grid">
+            <div class="search-place-item" onclick="showToast('서울')">
+              <div class="photo-placeholder" style="background:linear-gradient(135deg,#667eea,#764ba2);width:100%;height:100%;"></div>
+              <span class="label">서울</span>
+            </div>
+            <div class="search-place-item" onclick="showToast('부산')">
+              <div class="photo-placeholder" style="background:linear-gradient(135deg,#f093fb,#f5576c);width:100%;height:100%;"></div>
+              <span class="label">부산</span>
+            </div>
+            <div class="search-place-item" onclick="showToast('제주')">
+              <div class="photo-placeholder" style="background:linear-gradient(135deg,#4facfe,#00f2fe);width:100%;height:100%;"></div>
+              <span class="label">제주</span>
+            </div>
+            <div class="search-place-item" onclick="showToast('강릉')">
+              <div class="photo-placeholder" style="background:linear-gradient(135deg,#43e97b,#38f9d7);width:100%;height:100%;"></div>
+              <span class="label">강릉</span>
+            </div>
+          </div>
+          <div class="search-category-title">카테고리</div>
+          <div class="search-categories-grid">
+            <div class="search-cat-item" onclick="showToast('음식')">
+              <div class="search-cat-icon" style="background:linear-gradient(135deg,#f5af19,#f12711);"></div>
+              <span class="search-cat-label">음식</span>
+            </div>
+            <div class="search-cat-item" onclick="showToast('동물')">
+              <div class="search-cat-icon" style="background:linear-gradient(135deg,#a8e063,#56ab2f);"></div>
+              <span class="search-cat-label">동물</span>
+            </div>
+            <div class="search-cat-item" onclick="showToast('풍경')">
+              <div class="search-cat-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);"></div>
+              <span class="search-cat-label">풍경</span>
+            </div>
+            <div class="search-cat-item" onclick="showToast('텍스트')">
+              <div class="search-cat-icon" style="background:linear-gradient(135deg,#fbc2eb,#a6c1ee);"></div>
+              <span class="search-cat-label">텍스트</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.app-content -->
+
+    <!-- 선택 모드 액션 바 -->
+    <div class="select-action-bar" id="selectActionBar">
+      <button class="select-action-btn" onclick="shareSelected()">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke-width="1.5"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        공유
+      </button>
+      <button class="select-action-btn" onclick="favoriteSelected()">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        즐겨찾기
+      </button>
+      <button class="select-action-btn danger" onclick="deleteSelected()">
+        <svg viewBox="0 0 24 24" width="22" height="22" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        삭제
+      </button>
+    </div>
+
+    <!-- 하단 탭 바 -->
+    <div class="tab-bar" id="tabBar">
+      <div class="tab-item active" data-tab="library" onclick="switchTab('library')">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+        </svg>
+        <span>보관함</span>
+      </div>
+      <div class="tab-item" data-tab="foryou" onclick="switchTab('foryou')">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5">
+          <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
+        </svg>
+        <span>For You</span>
+      </div>
+      <div class="tab-item" data-tab="albums" onclick="switchTab('albums')">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5">
+          <rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 8h20"/><rect x="5" y="1" width="14" height="3" rx="1.5" fill="none"/>
+        </svg>
+        <span>앨범</span>
+      </div>
+      <div class="tab-item" data-tab="search" onclick="switchTab('search')">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span>검색</span>
+      </div>
+    </div>
+
+    <!-- 홈 인디케이터 -->
+    <div class="home-indicator">
+      <div class="home-indicator-bar"></div>
+    </div>
+
+    <!-- 사진 상세 뷰 오버레이 -->
+    <div class="detail-overlay" id="detailOverlay">
+      <div class="detail-top-bar" id="detailTopBar">
+        <button class="detail-close-btn" onclick="closeDetail()">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="detail-date" id="detailDate"></span>
+        <button class="detail-more-btn" onclick="showToast('더보기 메뉴')">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0a84ff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+        </button>
+      </div>
+      <div class="detail-photo-area" id="detailPhotoArea">
+        <div class="detail-photo" id="detailPhoto"></div>
+      </div>
+      <div class="detail-bottom-bar" id="detailBottomBar">
+        <button class="detail-action" onclick="sharePhoto()">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        </button>
+        <button class="detail-action" id="detailFavBtn" onclick="toggleDetailFav()">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        </button>
+        <button class="detail-action" onclick="showToast('정보')">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
+        <button class="detail-action" onclick="deletePhoto()">
+          <svg viewBox="0 0 24 24" width="24" height="24" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 토스트 -->
+    <div class="toast" id="toast"></div>
+
+  </div><!-- /.screen -->
+</div><!-- /.phone-frame -->
+
+<script>
+/* ==========================================
+   갤러리 목업 - iOS 사진 앱 스타일
+   ========================================== */
+
+// ===== 샘플 사진 데이터 =====
+const photos = [
+  // 2025년 2월
+  { id: 1, date: '2025-02-10', time: '14:23', location: '서울', gradient: 'linear-gradient(135deg,#667eea,#764ba2)', fav: false },
+  { id: 2, date: '2025-02-10', time: '14:25', location: '서울', gradient: 'linear-gradient(135deg,#f093fb,#f5576c)', fav: true },
+  { id: 3, date: '2025-02-09', time: '11:02', location: '서울', gradient: 'linear-gradient(135deg,#4facfe,#00f2fe)', fav: false },
+  { id: 4, date: '2025-02-09', time: '11:05', location: '서울', gradient: 'linear-gradient(135deg,#43e97b,#38f9d7)', fav: false, video: '0:32' },
+  { id: 5, date: '2025-02-08', time: '18:30', location: '강남', gradient: 'linear-gradient(135deg,#fa709a,#fee140)', fav: false },
+  { id: 6, date: '2025-02-08', time: '18:45', location: '강남', gradient: 'linear-gradient(135deg,#a18cd1,#fbc2eb)', fav: true },
+  { id: 7, date: '2025-02-05', time: '09:10', location: '판교', gradient: 'linear-gradient(135deg,#ffecd2,#fcb69f)', fav: false },
+  { id: 8, date: '2025-02-05', time: '09:15', location: '판교', gradient: 'linear-gradient(135deg,#ff9a9e,#fecfef)', fav: false },
+  { id: 9, date: '2025-02-03', time: '20:00', location: '홍대', gradient: 'linear-gradient(135deg,#a1c4fd,#c2e9fb)', fav: false, video: '1:05' },
+  // 2025년 1월
+  { id: 10, date: '2025-01-28', time: '16:40', location: '부산', gradient: 'linear-gradient(135deg,#d4fc79,#96e6a1)', fav: false },
+  { id: 11, date: '2025-01-28', time: '16:55', location: '부산', gradient: 'linear-gradient(135deg,#84fab0,#8fd3f4)', fav: true },
+  { id: 12, date: '2025-01-25', time: '13:20', location: '해운대', gradient: 'linear-gradient(135deg,#cfd9df,#e2ebf0)', fav: false },
+  { id: 13, date: '2025-01-25', time: '13:30', location: '해운대', gradient: 'linear-gradient(135deg,#f5f7fa,#c3cfe2)', fav: false },
+  { id: 14, date: '2025-01-20', time: '10:15', location: '제주', gradient: 'linear-gradient(135deg,#667eea,#764ba2)', fav: false, video: '0:15' },
+  { id: 15, date: '2025-01-20', time: '10:30', location: '제주', gradient: 'linear-gradient(135deg,#f093fb,#f5576c)', fav: true },
+  { id: 16, date: '2025-01-15', time: '08:00', location: '한라산', gradient: 'linear-gradient(135deg,#0c3483,#a2b6df)', fav: false },
+  { id: 17, date: '2025-01-15', time: '08:20', location: '한라산', gradient: 'linear-gradient(135deg,#fc5c7d,#6a82fb)', fav: false },
+  { id: 18, date: '2025-01-10', time: '19:00', location: '서울', gradient: 'linear-gradient(135deg,#f7971e,#ffd200)', fav: false },
+  // 2024년 12월
+  { id: 19, date: '2024-12-31', time: '23:55', location: '서울', gradient: 'linear-gradient(135deg,#1a1a2e,#e94560)', fav: true },
+  { id: 20, date: '2024-12-31', time: '23:59', location: '서울', gradient: 'linear-gradient(135deg,#0f3460,#533483)', fav: false, video: '0:45' },
+  { id: 21, date: '2024-12-25', time: '12:00', location: '집', gradient: 'linear-gradient(135deg,#c31432,#240b36)', fav: false },
+  { id: 22, date: '2024-12-25', time: '12:30', location: '집', gradient: 'linear-gradient(135deg,#11998e,#38ef7d)', fav: false },
+  { id: 23, date: '2024-12-20', time: '15:10', location: '명동', gradient: 'linear-gradient(135deg,#ee9ca7,#ffdde1)', fav: false },
+  { id: 24, date: '2024-12-20', time: '15:25', location: '명동', gradient: 'linear-gradient(135deg,#2193b0,#6dd5ed)', fav: true },
+];
+
+// ===== 앨범 데이터 =====
+const albums = [
+  { name: '최근 항목', count: 24, gradient: 'linear-gradient(135deg,#667eea,#764ba2)' },
+  { name: '즐겨찾기', count: 6, gradient: 'linear-gradient(135deg,#f093fb,#f5576c)' },
+  { name: '현장 사진', count: 8, gradient: 'linear-gradient(135deg,#4facfe,#00f2fe)' },
+  { name: '여행', count: 15, gradient: 'linear-gradient(135deg,#43e97b,#38f9d7)' },
+  { name: '스크린샷', count: 67, gradient: 'linear-gradient(135deg,#a18cd1,#fbc2eb)' },
+  { name: '문서', count: 12, gradient: 'linear-gradient(135deg,#ffecd2,#fcb69f)' },
+];
+
+// ===== 상태 =====
+let currentTab = 'library';
+let currentSegment = 'all';
+let selectMode = false;
+let selectedPhotos = new Set();
+let detailPhotoIndex = -1;
+let detailBarsVisible = true;
+let toastTimer;
+let isLight = false;
+
+// 터치 스와이프 상태
+let touchStartX = 0;
+let touchStartY = 0;
+let isSwiping = false;
+
+// ===== DOM 참조 =====
+const phoneFrame = document.getElementById('phoneFrame');
+const appContent = document.getElementById('appContent');
+
+// ===== 상태 바 시간 =====
+function updateStatusTime() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('statusTime').textContent = `${h}:${m}`;
+}
+updateStatusTime();
+setInterval(updateStatusTime, 60000);
+
+// ===== 토스트 =====
+function showToast(msg, duration = 1500) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+}
+
+// ===== 날짜 포맷 유틸 =====
+function formatDateGroup(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return `${y}년 ${m}월 ${d}일`;
+}
+
+function formatMonthGroup(dateStr) {
+  const [y, m] = dateStr.split('-').map(Number);
+  return `${y}년 ${m}월`;
+}
+
+// ===== 보관함 렌더링 =====
+function renderLibrary() {
+  const container = document.getElementById('tabLibrary');
+  container.innerHTML = '';
+
+  if (currentSegment === 'all') {
+    // 날짜별 그룹핑
+    const groups = {};
+    photos.forEach(p => {
+      const key = p.date;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    Object.keys(groups).sort().reverse().forEach(dateKey => {
+      const section = document.createElement('div');
+      section.className = 'date-section';
+      section.innerHTML = `<div class="date-header">${formatDateGroup(dateKey)}</div>`;
+
+      const grid = document.createElement('div');
+      grid.className = 'photo-grid';
+
+      groups[dateKey].forEach(photo => {
+        grid.appendChild(createPhotoItem(photo));
+      });
+
+      section.appendChild(grid);
+      container.appendChild(section);
+    });
+  } else if (currentSegment === 'months') {
+    const groups = {};
+    photos.forEach(p => {
+      const key = p.date.substring(0, 7);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    Object.keys(groups).sort().reverse().forEach(monthKey => {
+      const section = document.createElement('div');
+      section.className = 'date-section';
+      section.innerHTML = `<div class="date-header">${formatMonthGroup(monthKey + '-01')}</div>`;
+
+      const grid = document.createElement('div');
+      grid.className = 'photo-grid';
+
+      groups[monthKey].forEach(photo => {
+        grid.appendChild(createPhotoItem(photo));
+      });
+
+      section.appendChild(grid);
+      container.appendChild(section);
+    });
+  } else if (currentSegment === 'days') {
+    // 일별 - 대표 사진만 크게 표시
+    const groups = {};
+    photos.forEach(p => {
+      const key = p.date;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    Object.keys(groups).sort().reverse().forEach(dateKey => {
+      const section = document.createElement('div');
+      section.className = 'date-section';
+
+      const dateObj = new Date(dateKey);
+      const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayLabel = `${formatDateGroup(dateKey)} ${weekdays[dateObj.getDay()]}요일`;
+      section.innerHTML = `<div class="date-header">${dayLabel}</div>`;
+
+      const grid = document.createElement('div');
+      grid.className = 'photo-grid';
+      // 일별은 2열 그리드
+      grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+
+      groups[dateKey].slice(0, 4).forEach(photo => {
+        grid.appendChild(createPhotoItem(photo));
+      });
+
+      section.appendChild(grid);
+      container.appendChild(section);
+    });
+  } else if (currentSegment === 'years') {
+    // 연도별 - 대표 사진만
+    const groups = {};
+    photos.forEach(p => {
+      const key = p.date.substring(0, 4);
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(p);
+    });
+
+    Object.keys(groups).sort().reverse().forEach(yearKey => {
+      const section = document.createElement('div');
+      section.className = 'date-section';
+      section.innerHTML = `<div class="date-header">${yearKey}년</div>`;
+
+      const grid = document.createElement('div');
+      grid.className = 'photo-grid';
+      grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+
+      groups[yearKey].slice(0, 4).forEach(photo => {
+        grid.appendChild(createPhotoItem(photo));
+      });
+
+      section.appendChild(grid);
+      container.appendChild(section);
+    });
+  }
+}
+
+function createPhotoItem(photo) {
+  const idx = photos.indexOf(photo);
+  const item = document.createElement('div');
+  item.className = 'photo-item';
+  item.onclick = () => handlePhotoTap(idx);
+
+  item.innerHTML = `
+    <div class="photo-placeholder" style="background:${photo.gradient};"></div>
+    ${photo.video ? `<div class="video-badge"><svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><polygon points="5 3 19 12 5 21"/></svg>${photo.video}</div>` : ''}
+    ${photo.fav && !photo.video ? `<div class="fav-badge"><svg viewBox="0 0 24 24" width="14" height="14" fill="#fff" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>` : ''}
+    <div class="photo-check ${selectedPhotos.has(photo.id) ? 'checked' : ''}" data-id="${photo.id}">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+  `;
+
+  return item;
+}
+
+// ===== 사진 탭 핸들러 =====
+function handlePhotoTap(index) {
+  if (selectMode) {
+    const photo = photos[index];
+    const check = document.querySelector(`.photo-check[data-id="${photo.id}"]`);
+    if (selectedPhotos.has(photo.id)) {
+      selectedPhotos.delete(photo.id);
+      if (check) check.classList.remove('checked');
+    } else {
+      selectedPhotos.add(photo.id);
+      if (check) check.classList.add('checked');
+    }
+    updateSelectCount();
+  } else {
+    openDetail(index);
+  }
+}
+
+// ===== 탭 전환 =====
+function switchTab(tab) {
+  if (selectMode) toggleSelectMode();
+  currentTab = tab;
+
+  // 탭 뷰 전환
+  document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+
+  const tabMap = {
+    library: 'tabLibrary',
+    foryou: 'tabForYou',
+    albums: 'tabAlbums',
+    search: 'tabSearch'
+  };
+
+  document.getElementById(tabMap[tab]).classList.add('active');
+  document.querySelector(`.tab-item[data-tab="${tab}"]`).classList.add('active');
+
+  // 타이틀 업데이트
+  const titleMap = {
+    library: '보관함',
+    foryou: 'For You',
+    albums: '앨범',
+    search: '검색'
+  };
+  document.getElementById('topBarTitle').textContent = titleMap[tab];
+
+  // 세그먼트 컨트롤 표시/숨김
+  document.getElementById('segmentControl').style.display = tab === 'library' ? 'flex' : 'none';
+
+  // 선택 버튼 표시/숨김
+  document.getElementById('selectBtn').style.display = (tab === 'library') ? 'block' : 'none';
+
+  // 스크롤 초기화
+  appContent.scrollTop = 0;
+}
+
+// ===== 세그먼트 전환 =====
+function switchSegment(segment) {
+  currentSegment = segment;
+  document.querySelectorAll('.segment-item').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.segment-item[data-segment="${segment}"]`).classList.add('active');
+  renderLibrary();
+}
+
+// ===== 선택 모드 =====
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  const phoneScreen = document.querySelector('.screen');
+  const btn = document.getElementById('selectBtn');
+
+  if (selectMode) {
+    phoneScreen.classList.add('select-mode');
+    btn.textContent = '취소';
+    selectedPhotos.clear();
+    updateSelectCount();
+  } else {
+    phoneScreen.classList.remove('select-mode');
+    btn.textContent = '선택';
+    selectedPhotos.clear();
+    document.querySelectorAll('.photo-check').forEach(c => c.classList.remove('checked'));
+    document.getElementById('topBarTitle').textContent = '보관함';
+  }
+}
+
+function updateSelectCount() {
+  const count = selectedPhotos.size;
+  document.getElementById('topBarTitle').textContent = count > 0 ? `${count}장 선택됨` : '항목 선택';
+}
+
+function shareSelected() {
+  if (selectedPhotos.size === 0) { showToast('사진을 선택해주세요'); return; }
+  showToast(`${selectedPhotos.size}장 공유`);
+}
+
+function favoriteSelected() {
+  if (selectedPhotos.size === 0) { showToast('사진을 선택해주세요'); return; }
+  selectedPhotos.forEach(id => {
+    const p = photos.find(ph => ph.id === id);
+    if (p) p.fav = true;
+  });
+  showToast(`${selectedPhotos.size}장 즐겨찾기에 추가`);
+  toggleSelectMode();
+  renderLibrary();
+}
+
+function deleteSelected() {
+  if (selectedPhotos.size === 0) { showToast('사진을 선택해주세요'); return; }
+  showToast(`${selectedPhotos.size}장 삭제됨`);
+  toggleSelectMode();
+}
+
+// ===== 사진 상세 뷰 =====
+function openDetail(index) {
+  detailPhotoIndex = index;
+  detailBarsVisible = true;
+  const overlay = document.getElementById('detailOverlay');
+  overlay.classList.add('show');
+  renderDetailPhoto();
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').classList.remove('show');
+  detailPhotoIndex = -1;
+}
+
+function renderDetailPhoto() {
+  const photo = photos[detailPhotoIndex];
+  if (!photo) return;
+
+  // 날짜 표시
+  const [y, m, d] = photo.date.split('-').map(Number);
+  document.getElementById('detailDate').textContent = `${m}월 ${d}일 ${photo.time} · ${photo.location}`;
+
+  // 사진 표시
+  const container = document.getElementById('detailPhoto');
+  container.innerHTML = `<div class="photo-placeholder" style="background:${photo.gradient};width:100%;height:60%;border-radius:0;"></div>`;
+
+  // 즐겨찾기 상태
+  const favBtn = document.getElementById('detailFavBtn');
+  favBtn.classList.toggle('fav-active', photo.fav);
+
+  // 바 표시
+  document.getElementById('detailTopBar').classList.remove('hidden');
+  document.getElementById('detailBottomBar').classList.remove('hidden');
+  detailBarsVisible = true;
+}
+
+function toggleDetailBars() {
+  detailBarsVisible = !detailBarsVisible;
+  document.getElementById('detailTopBar').classList.toggle('hidden', !detailBarsVisible);
+  document.getElementById('detailBottomBar').classList.toggle('hidden', !detailBarsVisible);
+}
+
+function toggleDetailFav() {
+  const photo = photos[detailPhotoIndex];
+  if (!photo) return;
+  photo.fav = !photo.fav;
+  document.getElementById('detailFavBtn').classList.toggle('fav-active', photo.fav);
+  showToast(photo.fav ? '즐겨찾기에 추가됨' : '즐겨찾기에서 제거됨');
+}
+
+function sharePhoto() {
+  showToast('공유 시트 열기');
+}
+
+function deletePhoto() {
+  showToast('사진이 삭제됨');
+  closeDetail();
+}
+
+// ===== 상세 뷰 스와이프 =====
+const detailPhotoArea = document.getElementById('detailPhotoArea');
+
+detailPhotoArea.addEventListener('touchstart', (e) => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  isSwiping = false;
+}, { passive: true });
+
+detailPhotoArea.addEventListener('touchmove', (e) => {
+  const dx = e.touches[0].clientX - touchStartX;
+  const dy = e.touches[0].clientY - touchStartY;
+
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+    isSwiping = true;
+    const photo = document.getElementById('detailPhoto');
+    photo.style.transition = 'none';
+    photo.style.transform = `translateX(${dx}px)`;
+  }
+}, { passive: true });
+
+detailPhotoArea.addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const photo = document.getElementById('detailPhoto');
+  photo.style.transition = 'transform 0.3s ease';
+
+  if (isSwiping && Math.abs(dx) > 60) {
+    if (dx < 0 && detailPhotoIndex < photos.length - 1) {
+      // 왼쪽 스와이프 → 다음 사진
+      photo.style.transform = 'translateX(-100%)';
+      setTimeout(() => {
+        detailPhotoIndex++;
+        photo.style.transition = 'none';
+        photo.style.transform = 'translateX(100%)';
+        renderDetailPhoto();
+        requestAnimationFrame(() => {
+          photo.style.transition = 'transform 0.3s ease';
+          photo.style.transform = 'translateX(0)';
+        });
+      }, 200);
+    } else if (dx > 0 && detailPhotoIndex > 0) {
+      // 오른쪽 스와이프 → 이전 사진
+      photo.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        detailPhotoIndex--;
+        photo.style.transition = 'none';
+        photo.style.transform = 'translateX(-100%)';
+        renderDetailPhoto();
+        requestAnimationFrame(() => {
+          photo.style.transition = 'transform 0.3s ease';
+          photo.style.transform = 'translateX(0)';
+        });
+      }, 200);
+    } else {
+      photo.style.transform = 'translateX(0)';
+    }
+  } else {
+    photo.style.transform = 'translateX(0)';
+    if (!isSwiping) {
+      toggleDetailBars();
+    }
+  }
+  isSwiping = false;
+});
+
+// 마우스 스와이프 (데스크탑 지원)
+let mouseDown = false;
+let mouseStartX = 0;
+
+detailPhotoArea.addEventListener('mousedown', (e) => {
+  mouseDown = true;
+  mouseStartX = e.clientX;
+  isSwiping = false;
+});
+
+detailPhotoArea.addEventListener('mousemove', (e) => {
+  if (!mouseDown) return;
+  const dx = e.clientX - mouseStartX;
+  if (Math.abs(dx) > 10) {
+    isSwiping = true;
+    const photo = document.getElementById('detailPhoto');
+    photo.style.transition = 'none';
+    photo.style.transform = `translateX(${dx}px)`;
+  }
+});
+
+detailPhotoArea.addEventListener('mouseup', (e) => {
+  if (!mouseDown) return;
+  mouseDown = false;
+  const dx = e.clientX - mouseStartX;
+  const photo = document.getElementById('detailPhoto');
+  photo.style.transition = 'transform 0.3s ease';
+
+  if (isSwiping && Math.abs(dx) > 60) {
+    if (dx < 0 && detailPhotoIndex < photos.length - 1) {
+      photo.style.transform = 'translateX(-100%)';
+      setTimeout(() => {
+        detailPhotoIndex++;
+        photo.style.transition = 'none';
+        photo.style.transform = 'translateX(100%)';
+        renderDetailPhoto();
+        requestAnimationFrame(() => {
+          photo.style.transition = 'transform 0.3s ease';
+          photo.style.transform = 'translateX(0)';
+        });
+      }, 200);
+    } else if (dx > 0 && detailPhotoIndex > 0) {
+      photo.style.transform = 'translateX(100%)';
+      setTimeout(() => {
+        detailPhotoIndex--;
+        photo.style.transition = 'none';
+        photo.style.transform = 'translateX(-100%)';
+        renderDetailPhoto();
+        requestAnimationFrame(() => {
+          photo.style.transition = 'transform 0.3s ease';
+          photo.style.transform = 'translateX(0)';
+        });
+      }, 200);
+    } else {
+      photo.style.transform = 'translateX(0)';
+    }
+  } else {
+    photo.style.transform = 'translateX(0)';
+    if (!isSwiping) toggleDetailBars();
+  }
+  isSwiping = false;
+});
+
+// ===== 앨범 그리드 렌더링 =====
+function renderAlbums() {
+  const grid = document.getElementById('albumsGrid');
+  grid.innerHTML = '';
+
+  albums.forEach(album => {
+    const card = document.createElement('div');
+    card.className = 'album-card';
+    card.onclick = () => showToast(`${album.name} 앨범`);
+    card.innerHTML = `
+      <div class="album-cover">
+        <div class="photo-placeholder" style="background:${album.gradient};"></div>
+      </div>
+      <div class="album-name">${album.name}</div>
+      <div class="album-count">${album.count}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ===== 테마 토글 =====
+// 상태 바의 배터리 아이콘을 테마 토글 버튼으로 사용하지 않고,
+// 탑바에 테마 토글 추가
+document.getElementById('topBarTitle').addEventListener('dblclick', () => {
+  isLight = !isLight;
+  phoneFrame.classList.toggle('light', isLight);
+  showToast(isLight ? '라이트 모드' : '다크 모드');
+});
+
+// ===== 초기화 =====
+renderLibrary();
+renderAlbums();
+</script>
+
+</body>
+</html>
